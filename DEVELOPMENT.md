@@ -23,8 +23,15 @@ $env:IMAGE_TO_TEST="mc-dev"
 docker build -t $env:IMAGE_TO_TEST .
 pushd "tests/setuponlytests/$env:FOLDER_TO_TEST/"
 docker-compose run mc
-docker-compose down --remove-orphans
+docker-compose down -v --remove-orphans
 popd
+```
+
+PowerShell: Building different images of Java for testing
+```powershell
+$env:BASE_IMAGE='eclipse-temurin:8u312-b07-jre'
+$env:IMAGE_TO_TEST="mc-dev"
+docker build --build-arg BASE_IMAGE=$env:BASE_IMAGE -t $env:IMAGE_TO_TEST .
 ```
 
 Bash: (Example of building and testing ForgeAPI)
@@ -35,7 +42,7 @@ export IMAGE_TO_TEST="mc-dev"
 docker build -t $IMAGE_TO_TEST .
 pushd tests/setuponlytests/$FOLDER_TO_TEST/
 docker-compose run mc
-docker-compose down --remove-orphans
+docker-compose down -v --remove-orphans
 popd
 ```
 
@@ -71,7 +78,7 @@ In the cloned copy of [`mc-image-helper`](https://github.com/itzg/mc-image-helpe
 Assuming [http-server](https://www.npmjs.com/package/http-server) is installed globally, start a static web server using:
 
 ```shell
-http-server ./build/distributions -p 0
+http-server ./build/distributions -p 8080
 ```
 
 Note the port that was selected by http-server and pass the build arguments, such as:
@@ -81,7 +88,7 @@ Note the port that was selected by http-server and pass the build arguments, suc
 --build-arg MC_HELPER_BASE_URL=http://host.docker.internal:8080
 ```
 
-Now the image can be built like normal and it will install mc-image-helper from the locally built copy.
+Now the image can be built like normal, and it will install mc-image-helper from the locally built copy.
 
 ## Generating release notes
 

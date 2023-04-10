@@ -5,6 +5,14 @@
 [![Build and Publish](https://github.com/itzg/docker-minecraft-server/workflows/Build%20and%20Publish/badge.svg)](https://github.com/itzg/docker-minecraft-server/actions)
 [![](https://img.shields.io/badge/Donate-Buy%20me%20a%20coffee-orange.svg)](https://www.buymeacoffee.com/itzg)
 
+---
+
+## [View the documentation](https://itzg.github.io/docker-minecraft-docs/)
+
+---
+
+## Intro
+
 This docker image provides a Minecraft Server that will automatically download the latest stable
 version at startup. You can also run/upgrade to any specific version or the
 latest snapshot. See the _Versions_ section below for more information.
@@ -19,136 +27,9 @@ where, in this case, the standard server port 25565, will be exposed on your hos
 
 > Be sure to always include `-e EULA=TRUE` in your commands and container definitions, as Mojang/Microsoft requires EULA acceptance.
 
+> **DO NOT** port forward RCON on 25575 without first setting `RCON_PASSWORD` to a secure value. It is highly recommended to only use RCON within the container, such as with `rcon-cli`. 
+
 By default, the container will download the latest version of the "vanilla" [Minecraft: Java Edition server](https://www.minecraft.net/en-us/download/server) provided by Mojang. The [`VERSION`](#versions) and the [`TYPE`](#server-types) can be configured to create many variations of desired Minecraft server. 
-
-**TABLE OF CONTENTS**
-
-<!--ts-->
-   * [Mitigated Log4jShell Vulnerability](#mitigated-log4jshell-vulnerability)
-   * [Looking for a Bedrock Dedicated Server](#looking-for-a-bedrock-dedicated-server)
-   * [Interacting with the server](#interacting-with-the-server)
-   * [Data Directory](#data-directory)
-      * [Attaching data directory to host filesystem](#attaching-data-directory-to-host-filesystem)
-      * [Converting anonymous /data volume to named volume](#converting-anonymous-data-volume-to-named-volume)
-   * [Versions](#versions)
-   * [Running Minecraft server on different Java version](#running-minecraft-server-on-different-java-version)
-      * [Deprecated Image Tags](#deprecated-image-tags)
-   * [Healthcheck](#healthcheck)
-   * [Deployment Templates and Examples](#deployment-templates-and-examples)
-      * [Helm Charts](#helm-charts)
-      * [Examples](#examples)
-      * [Amazon Web Services (AWS) Deployment](#amazon-web-services-aws-deployment)
-      * [Using Docker Compose](#using-docker-compose)
-   * [Troubleshooting](#troubleshooting)
-   * [Server types](#server-types)
-      * [Running a Forge Server](#running-a-forge-server)
-      * [Running a Fabric Server](#running-a-fabric-server)
-      * [Running a Bukkit/Spigot server](#running-a-bukkitspigot-server)
-      * [Running a Paper server](#running-a-paper-server)
-      * [Running an Airplane server](#running-an-airplane-server)
-      * [Running a Pufferfish server](#running-a-pufferfish-server)
-      * [Running a Purpur server](#running-a-purpur-server)
-      * [Running a Magma server](#running-a-magma-server)
-      * [Running a Mohist server](#running-a-mohist-server)
-      * [Running a Catserver type server](#running-a-catserver-type-server)
-      * [Running a Canyon server](#running-a-canyon-server)
-      * [Running a SpongeVanilla server](#running-a-spongevanilla-server)
-      * [Running a Limbo server](#running-a-limbo-server)
-      * [Running a Crucible server](#running-a-crucible-server)
-   * [Running a server with a Feed the Beast modpack](#running-a-server-with-a-feed-the-beast-modpack)
-      * [Environment Variables:](#environment-variables)
-      * [Upgrading](#upgrading)
-      * [Example](#example)
-   * [Running a server with a CurseForge modpack](#running-a-server-with-a-curseforge-modpack)
-      * [Modpack data directory](#modpack-data-directory)
-      * [Buggy start scripts](#buggy-start-scripts)
-      * [Fixing "unable to launch forgemodloader"](#fixing-unable-to-launch-forgemodloader)
-   * [Running a server with a packwiz modpack](#running-a-server-with-a-packwiz-modpack)
-   * [Working with mods and plugins](#working-with-mods-and-plugins)
-      * [Optional plugins, mods, and config attach points](#optional-plugins-mods-and-config-attach-points)
-      * [Auto-downloading SpigotMC/Bukkit/PaperMC plugins](#auto-downloading-spigotmcbukkitpapermc-plugins)
-      * [Downloadable mod/plugin pack for Forge, Fabric, and Bukkit-like Servers](#downloadable-modplugin-pack-for-forge-fabric-and-bukkit-like-servers)
-      * [ForgeAPI usage to use non-version specific projects](#forgeapi-usage-to-use-non-version-specific-projects)
-      * [Generic pack files](#generic-pack-files)
-      * [Mod/Plugin URL Listing File](#modplugin-url-listing-file)
-      * [Remove old mods/plugins](#remove-old-modsplugins)
-   * [Working with world data](#working-with-world-data)
-      * [Downloadable world](#downloadable-world)
-      * [Cloning world from a container path](#cloning-world-from-a-container-path)
-      * [Overwrite world on start](#overwrite-world-on-start)
-      * [Datapacks](#datapacks)
-      * [VanillaTweaks](#vanillatweaks)
-   * [Server configuration](#server-configuration)
-      * [Message of the Day](#message-of-the-day)
-      * [Difficulty](#difficulty)
-      * [Whitelist Players](#whitelist-players)
-      * [Op/Administrator Players](#opadministrator-players)
-      * [Server icon](#server-icon)
-      * [Rcon](#rcon)
-      * [Query](#query)
-      * [Max players](#max-players)
-      * [Max world size](#max-world-size)
-      * [Allow Nether](#allow-nether)
-      * [Announce Player Achievements](#announce-player-achievements)
-      * [Enable Command Block](#enable-command-block)
-      * [Force Gamemode](#force-gamemode)
-      * [Generate Structures](#generate-structures)
-      * [Hardcore](#hardcore)
-      * [Snooper](#snooper)
-      * [Max Build Height](#max-build-height)
-      * [Max Tick Time](#max-tick-time)
-      * [Spawn Animals](#spawn-animals)
-      * [Spawn Monsters](#spawn-monsters)
-      * [Spawn NPCs](#spawn-npcs)
-      * [Set spawn protection](#set-spawn-protection)
-      * [View Distance](#view-distance)
-      * [Level Seed](#level-seed)
-      * [Game Mode](#game-mode)
-      * [PVP Mode](#pvp-mode)
-      * [Level Type and Generator Settings](#level-type-and-generator-settings)
-      * [Custom Server Resource Pack](#custom-server-resource-pack)
-      * [Level / World Save Name](#level--world-save-name)
-      * [Online mode](#online-mode)
-      * [Allow flight](#allow-flight)
-      * [Server name](#server-name)
-      * [Server port](#server-port)
-      * [Other server property mappings](#other-server-property-mappings)
-   * [Miscellaneous Options](#miscellaneous-options)
-      * [Replacing variables inside configs](#replacing-variables-inside-configs)
-      * [Patching existing files](#patching-existing-files)
-      * [Running with a custom server JAR](#running-with-a-custom-server-jar)
-      * [Force re-download of the server file](#force-re-download-of-the-server-file)
-      * [Running as alternate user/group ID](#running-as-alternate-usergroup-id)
-      * [Memory Limit](#memory-limit)
-      * [JVM Options](#jvm-options)
-      * [Interactive and Color Console](#interactive-and-color-console)
-      * [Server Shutdown Options](#server-shutdown-options)
-      * [OpenJ9 Specific Options](#openj9-specific-options)
-      * [Enabling rolling logs](#enabling-rolling-logs)
-      * [Timezone Configuration](#timezone-configuration)
-      * [Enable Remote JMX for Profiling](#enable-remote-jmx-for-profiling)
-      * [Enable Aikar's Flags](#enable-aikars-flags)
-      * [HTTP Proxy](#http-proxy)
-      * [Using "noconsole" option](#using-noconsole-option)
-      * [Explicitly disable GUI](#explicitly-disable-gui)
-      * [Stop Duration](#stop-duration)
-      * [Setup only](#setup-only)
-      * [Enable Flare Flags](#enable-flare-flags)
-      * [Enable timestamps in init logs](#enable-timestamps-in-init-logs)
-   * [Autopause](#autopause)
-      * [Description](#description)
-      * [Enabling Autopause](#enabling-autopause)
-   * [Autostop](#autostop)
-   * [Running on RaspberryPi](#running-on-raspberrypi)
-   * [Contributing](#contributing)
-
-<!-- Added by: runner, at: Mon Feb 14 00:02:26 UTC 2022 -->
-
-<!--te-->
-
-## Mitigated Log4jShell Vulnerability
-
-**Please ensure you have pulled the latest image** since [all official mitigations](https://www.minecraft.net/en-us/article/important-message--security-vulnerability-java-edition) are automatically applied by the container startup process.
 
 ## Looking for a Bedrock Dedicated Server
 
@@ -211,9 +92,14 @@ Everything the container manages is located under the **container's** `/data` pa
 
 ### Attaching data directory to host filesystem
 
-In most cases the easier way to persist and work with the minecraft data files is to use the `-v` argument to map a directory on your host machine to the container's `/data` directory, such as the following where `/home/user/minecraft-data` would be a directory of your choosing on your host machine:
+In most cases the easiest way to persist and work with the minecraft data files is to use the [volume mounting](https://docs.docker.com/storage/volumes/) `-v` argument to map a directory on your host machine to the container's `/data` directory. In the following example, the path `/home/user/minecraft-data` **must be** a directory on your host machine:
 
-    docker run -d -v /home/user/minecraft-data:/data ...
+    -v /home/user/minecraft-data:/data
+       ------------------------- -----
+        |                         |
+        |                         +-- must always be /data
+        |
+        +-- replace with a directory on your host machine
 
 When attached in this way you can stop the server, edit the configuration under your attached directory and start the server again to pick up the new configuration.
 
@@ -262,6 +148,16 @@ Now you can recreate the container with any environment variable changes, etc by
 docker run -d -it --name mc-new -v mc:/data -p 25565:25565 -e EULA=TRUE -e MEMORY=2G itzg/minecraft-server
 ```
 
+### Locating filesystem path of anonymous volume
+
+The `Source` field from the output of this command will show where the anonymous volume is mounted from:
+
+```shell
+docker inspect -f "{{json .Mounts}}" CONTAINER_NAME_OR_ID
+```
+
+> **NOTE** On Windows with WSL the volumes path is `\\wsl$\docker-desktop-data\data\docker\volumes`
+
 ## Versions
 
 To use a different Minecraft version, pass the `VERSION` environment variable (case sensitive), which can have the value
@@ -285,19 +181,27 @@ the server jar remain in the `/data` directory. It is safe to remove those._
 
 ## Running Minecraft server on different Java version
 
-When using the image `itzg:/minecraft-server` without a tag, the `latest` image tag is implied from the table below. To use a different version of Java, please use an alternate tag to run your Minecraft server container.
+> **For Forge versions less than 1.18, you _must_ use the `java8-multiarch` (or other java8) image tag.**
 
-| Tag name        | Java version | Linux  | JVM Type | Architecture      |
-|-----------------|-------------|--------|----------|-------------------|
-| latest          | 17          | Debian | Hotspot  | amd64,arm64,armv7 |
-| java8           | 8           | Alpine | Hotspot  | amd64             |
-| java8-multiarch | 8           | Debian | Hotspot  | amd64,arm64,armv7 |
-| java8-openj9    | 8           | Debian | OpenJ9   | amd64             |
-| java11          | 11          | Debian | Hotspot  | amd64,arm64,armv7 |
-| java11-openj9   | 11          | Debian | OpenJ9   | amd64             |
-| java17          | 17          | Ubuntu | Hotspot  | amd64,arm64,armv7 |
-| java17-openj9   | 17          | Debian | OpenJ9   | amd64             |
-| java17-alpine   | 17          | Alpine | Hotspot  | amd64             |
+When using the image `itzg/minecraft-server` without a tag, the `latest` image tag is implied from the table below. To use a different version of Java, please use an alternate tag to run your Minecraft server container.
+
+| Tag name          | Java version | Linux  | JVM Type    | Architecture      |
+|-------------------|--------------|--------|-------------|-------------------|
+| latest            | 17           | Ubuntu | Hotspot     | amd64,arm64,armv7 |
+| java8             | 8            | Alpine | Hotspot     | amd64             |
+| java8-jdk         | 8            | Ubuntu | Hotspot+JDK | amd64             |
+| java8-multiarch   | 8            | Ubuntu | Hotspot     | amd64,arm64,armv7 |
+| java8-openj9      | 8            | Debian | OpenJ9      | amd64             |
+| java8-graalvm-ce  | 8            | Oracle | GraalVM CE  | amd64             |
+| java11            | 11           | Ubuntu | Hotspot     | amd64,arm64,armv7 |
+| java11-jdk        | 11           | Ubuntu | Hotspot+JDK | amd64,arm64,armv7 |
+| java11-openj9     | 11           | Debian | OpenJ9      | amd64             |
+| java17            | 17           | Ubuntu | Hotspot     | amd64,arm64,armv7 |
+| java17-jdk        | 17           | Ubuntu | Hotspot+JDK | amd64,arm64,armv7 |
+| java17-openj9     | 17           | Debian | OpenJ9      | amd64             |
+| java17-graalvm-ce | 17           | Oracle | GraalVM CE  | amd64,arm64       |
+| java17-alpine     | 17           | Alpine | Hotspot     | amd64             |
+| java19            | 19           | Ubuntu | Hotspot     | amd64,arm64,armv7 |
 
 For example, to use Java version 8 on any supported architecture:
 
@@ -317,11 +221,43 @@ The following image tags have been deprecated and are no longer receiving update
 - multiarch-latest
 - java16/java16-openj9
 
+## Related Projects
+
+### [itzg/minecraft-bedrock-server](https://github.com/itzg/docker-minecraft-bedrock-server)
+
+Docker image that runs a Minecraft Bedrock server.
+
+### [mc-router](https://github.com/itzg/mc-router)
+
+Lightweight multiplexer/proxy for Minecraft Java servers. Provided as a stand-alone application and a Docker image.
+
+### [itzg/bungeecord](https://github.com/itzg/docker-bungeecord/)
+
+Docker image that runs a proxy powered by Bungeecord, Velocity, or Waterfall
+
+### [itzg/mc-backup](https://github.com/itzg/docker-mc-backup)
+
+Docker image that runs as a side-car container to backup world data.
+
+### [rcon-cli](https://github.com/itzg/rcon-cli)
+
+A tool that is bundled with this image to provide CLI access to an RCON endpoint.
+
+### [mc-monitor](https://github.com/itzg/mc-monitor)
+
+A tool that is bundled with this image that provides health checks and metrics reporting, such as a Prometheus exporter or a telegraf data source.
+
+### [mc-image-helper](https://github.com/itzg/mc-image-helper)
+
+A tool that is bundled with this image to provide complex, re-usable preparation operations. 
+
+### [itzg/rcon](https://github.com/itzg/docker-rcon-web-admin)
+
+An image that dockerizes [rcon-web-admin](https://github.com/rcon-web-admin/rcon-web-admin).
+
 ## Healthcheck
 
-This image contains [mc-monitor](https://github.com/itzg/mc-monitor) and uses
-its `status` command to continually check on the container's. That can be observed
-from the `STATUS` column of `docker ps`
+This image contains [mc-monitor](https://github.com/itzg/mc-monitor) and uses its `status` command to continually check on the container's. That can be observed from the `STATUS` column of `docker ps`
 
 ```
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                    PORTS                                 NAMES
@@ -333,6 +269,16 @@ You can also query the container's health in a script friendly way:
 ```
 > docker container inspect -f "{{.State.Health.Status}}" mc
 healthy
+```
+
+There's actually a wrapper script called `mc-health` that takes care of calling `mc-monitor status` with the correct arguments. If needing to customize the health checks parameters, such as in a compose file, then use something like the following in the service declaration:
+
+```yaml
+healthcheck:
+  test: mc-health
+  start_period: 1m
+  interval: 5s
+  retries: 20
 ```
 
 Some orchestration systems, such as Portainer, don't allow for disabling the default `HEALTHCHECK` declared by this image. In those cases you can approximate the disabling of healthchecks by setting the environment variable `DISABLE_HEALTHCHECK` to `true`.
@@ -397,11 +343,11 @@ To troubleshoot any issues with memory allocation reported by the JVM, set the e
 
 Enable [Forge server](http://www.minecraftforge.net/) mode by adding a `-e TYPE=FORGE` to your command-line.
 
-The overall version is specified by `VERSION`, [as described in the section above](#versions) and will run the recommended Forge version by default. You can also choose to run a specific Forge version with `FORGEVERSION`, such as `-e FORGEVERSION=14.23.5.2854`.
+The overall version is specified by `VERSION`, [as described in the section above](#versions) and will run the recommended Forge version by default. You can also choose to run a specific Forge version with `FORGE_VERSION`, such as `-e FORGE_VERSION=14.23.5.2854`.
 
     docker run -d -v /path/on/host:/data \
         -e TYPE=FORGE \
-        -e VERSION=1.12.2 -e FORGEVERSION=14.23.5.2854 \
+        -e VERSION=1.12.2 -e FORGE_VERSION=14.23.5.2854 \
         -p 25565:25565 -e EULA=TRUE --name mc itzg/minecraft-server
 
 To use a pre-downloaded Forge installer, place it in the attached `/data` directory and
@@ -417,6 +363,8 @@ the URL with `FORGE_INSTALLER_URL`, such as:
         -e FORGE_INSTALLER_URL=http://HOST/forge-1.11.2-13.20.0.2228-installer.jar ...
 
 In both of the cases above, there is no need for the `VERSION` or `FORGEVERSION` variables.
+
+> If an error occurred while installing Forge, it might be possible to resolve by temporarily setting `FORGE_FORCE_REINSTALL` to "true". Be sure to remove that variable after successfully starting the server.
 
 ### Running a Fabric Server
 
@@ -445,6 +393,33 @@ docker run -d -v /path/on/host:/data ... \
 
 See the [Working with mods and plugins](#working-with-mods-and-plugins) section to set up Fabric mods and configuration.
 
+### Running a Quilt Server
+
+Enable [Quilt server](https://quiltmc.org/) mode by adding a `-e TYPE=QUILT` to your command-line.
+
+```
+docker run -d -v /path/on/host:/data \
+    -e TYPE=QUILT \
+    -p 25565:25565 -e EULA=TRUE --name mc itzg/minecraft-server
+```
+
+By default, the container will install the latest [quilt server launcher](https://quiltmc.org/install/server/), using the latest [quilt-installer](https://github.com/QuiltMC/quilt-installer) against the minecraft version you have defined with `VERSION` (defaulting to the latest vanilla release of the game).
+
+A specific loader or installer version other than the latest can be requested using `QUILT_LOADER_VERSION` and `QUILT_INSTALLER_VERSION` respectively, such as:
+
+```
+docker run -d -v /path/on/host:/data ... \
+    -e TYPE=QUILT \
+    -e QUILT_LOADER_VERSION=0.16.0 \
+    -e QUILT_INSTALLER_VERSION=0.4.1
+```
+
+> If you wish to use an alternative launcher you can: 
+> * Provide the path to a custom launcher jar available to the container with `QUILT_LAUNCHER`, relative to `/data` (such as `-e QUILT_LAUNCHER=quilt-server-custom.jar`)
+> * Provide the URL to a custom launcher jar with `QUILT_LAUNCHER_URL` (such as `-e QUILT_LAUNCHER_URL=http://HOST/quilt-server-custom.jar`)
+
+See the [Working with mods and plugins](#working-with-mods-and-plugins) section to set up Quilt mods and configuration.
+
 ### Running a Bukkit/Spigot server
 
 Enable Bukkit/Spigot server mode by adding a `-e TYPE=BUKKIT` or `-e TYPE=SPIGOT` to your command-line.
@@ -452,6 +427,8 @@ Enable Bukkit/Spigot server mode by adding a `-e TYPE=BUKKIT` or `-e TYPE=SPIGOT
     docker run -d -v /path/on/host:/data \
         -e TYPE=SPIGOT \
         -p 25565:25565 -e EULA=TRUE --name mc itzg/minecraft-server
+
+If the downloaded server jar is corrupted, set `FORCE_REDOWNLOAD` to "true" to force a re-download during next container startup. After successfully re-downloading, you should remove that or set to "false".
 
 If you are hosting your own copy of Bukkit/Spigot you can override the download URLs with:
 
@@ -462,7 +439,7 @@ You can build spigot from source by adding `-e BUILD_FROM_SOURCE=true`
 
 Plugins can either be managed within the `plugins` subdirectory of the [data directory](#data-directory) or you can also [attach a `/plugins` volume](#optional-plugins-mods-and-config-attach-points). If you add plugins while the container is running, you'll need to restart it to pick those up.
 
-[You can also auto-download plugins using `SPIGET_RESOURCES`.](#auto-downloading-spigotmcbukkitpapermc-plugins)
+[You can also auto-download plugins using `SPIGET_RESOURCES`.](#auto-downloading-spigotmcbukkitpapermc-plugins-with-spiget)
 
 > NOTE some of the `VERSION` values are not as intuitive as you would think, so make sure to click into the version entry to find the **exact** version needed for the download. For example, "1.8" is not sufficient since their download naming expects `1.8-R0.1-SNAPSHOT-latest` exactly.
 
@@ -480,19 +457,7 @@ If you are hosting your own copy of Paper you can override the download URL with
 
 If you have attached a host directory to the `/data` volume, then you can install plugins via the `plugins` subdirectory. You can also [attach a `/plugins` volume](#optional-plugins-mods-and-config-attach-points). If you add plugins while the container is running, you'll need to restart it to pick those up.
 
-[You can also auto-download plugins using `SPIGET_RESOURCES`.](#auto-downloading-spigotmcbukkitpapermc-plugins)
-
-### Running an Airplane server
-
-An [Airplane](https://airplane.gg) server, which is "a stable, optimized, well supported 1.17 Paper fork."
-
-    -e TYPE=AIRPLANE
-
-> NOTE: The `VERSION` variable is used to select an Airplane type to download. The available options are "LATEST" and "PURPUR", both 1.17.1. Airplane does not support 1.18 -- use Paper/Pufferfish/Purpur.
-
-Extra variables:
-- `FORCE_REDOWNLOAD=false` : set to true to force the located server jar to be re-downloaded
-- `USE_FLARE_FLAGS=false` : set to true to add appropriate flags for the built-in [Flare](https://blog.airplane.gg/flare) profiler
+[You can also auto-download plugins using `SPIGET_RESOURCES`.](#auto-downloading-spigotmcbukkitpapermc-plugins-with-spiget)
 
 ### Running a Pufferfish server
 
@@ -500,16 +465,16 @@ A [Pufferfish](https://github.com/pufferfish-gg/Pufferfish) server, which is "a 
 
     -e TYPE=PUFFERFISH
 
-> NOTE: The `VERSION` variable is used to select a Pufferfish branch to download from. The available options are "LATEST" and "1.18"
+> NOTE: The `VERSION` variable is used to select branch latest, 1.18, or 1.17. Use PUFFERFISH_BUILD to really select the SERVER VERSION number.
 
 Extra variables:
-- `PUFFERFISH_BUILD=lastSuccessfulBuild` : set a specific Pufferfish build to use
+- `PUFFERFISH_BUILD=lastSuccessfulBuild` : set a specific Pufferfish build to use. Example: selecting build 47 => 1.18.1, or build 50 => 1.18.2 etc
 - `FORCE_REDOWNLOAD=false` : set to true to force the located server jar to be re-downloaded
 - `USE_FLARE_FLAGS=false` : set to true to add appropriate flags for the built-in [Flare](https://blog.airplane.gg/flare) profiler
 
 ### Running a Purpur server
 
-A [Purpur](https://purpur.pl3x.net/) server, which is "drop-in replacement for Paper servers designed for configurability, new fun and exciting gameplay features, and performance built on top of Airplane."
+A [Purpur](https://purpurmc.org/) server, which is "a drop-in replacement for Paper servers designed for configurability and new, fun, exciting gameplay features."
 
     -e TYPE=PURPUR
 
@@ -519,14 +484,13 @@ Extra variables:
 - `PURPUR_BUILD=LATEST` : set a specific Purpur build to use
 - `FORCE_REDOWNLOAD=false` : set to true to force the located server jar to be re-downloaded
 - `USE_FLARE_FLAGS=false` : set to true to add appropriate flags for the built-in [Flare](https://blog.airplane.gg/flare) profiler
+- `PURPUR_DOWNLOAD_URL=<url>` : set URL to download Purpur from custom URL.
 
 ### Running a Magma server
 
 A [Magma](https://magmafoundation.org/) server, which is a combination of Forge and PaperMC, can be used with
 
     -e TYPE=MAGMA
-
-By default, the "stable" channel is used, but you can set `MAGMA_CHANNEL` to "dev" to access dev channel versions.
 
 > **NOTE** there are limited base versions supported, so you will also need to  set `VERSION`, such as "1.12.2", "1.16.5", etc.
 
@@ -551,6 +515,16 @@ A [Catserver](http://catserver.moe/) type server can be used with
 
 > **NOTE** Catserver only provides a single release stream, so `VERSION` is ignored
 
+### Running a Loliserver type server
+
+A [Loliserver](https://github.com/Loli-Server/LoliServer) type server can be used with
+
+    -e TYPE=LOLISERVER
+
+> **NOTE** Loliserver only provides a single release stream, so `VERSION` is ignored
+
+> **Disclaimer** The retrieval of the serverjar is not bulletproof. It can and probably will change in the future.
+
 ### Running a Canyon server
 
 [Canyon](https://github.com/canyonmodded/canyon) is a fork of CraftBukkit for Minecraft Beta 1.7.3. It includes multiple enhancements whilst also retaining compatibility with old Bukkit plugins and mods as much as possible.
@@ -569,7 +543,7 @@ Enable SpongeVanilla server mode by adding a `-e TYPE=SPONGEVANILLA` to your com
     
 By default the container will run the latest `STABLE` version.
 If you want to run a specific version, you can add `-e SPONGEVERSION=1.11.2-6.1.0-BETA-19` to your command-line.
-
+    
 Beware that current [Sponge](https://www.spongepowered.org) `STABLE` versions for Minecraft 1.12 require using [the Java 8 tag](#running-minecraft-server-on-different-java-version):
     
     docker run -d -v /path/on/host:/data -e TYPE=SPONGEVANILLA \
@@ -593,7 +567,10 @@ Configuration options with defaults:
 
 - `FORCE_REDOWNLOAD`=false
 - `LIMBO_SCHEMA_FILENAME`=default.schem
-- `LEVEL`="Default;${LIMBO_SCHEMA_FILENAME}"
+- `LEVEL`="Default;${LIMBO_SCHEMA
+
+
+NAME}"
 
 > NOTE: instead of using format codes in the MOTD, Limbo requires [JSON chat content](https://minecraft.fandom.com/wiki/Raw_JSON_text_format#Java_Edition). If a plain string is provided, which is the default, then it gets converted into the required JSON structure. 
 
@@ -609,13 +586,17 @@ Crucible is only available for 1.7.10, so be sure to set `VERSION=1.7.10`.
 
 ## Running a server with a Feed the Beast modpack
 
-> **NOTE** requires one of the Debian based images listed in [the Java versions section](#running-minecraft-server-on-different-java-version).
+> **NOTE** requires one of the Ubuntu with Hotspot images listed in [the Java versions section](#running-minecraft-server-on-different-java-version).
 
 [Feed the Beast application](https://www.feed-the-beast.com/) modpacks are supported by using `-e TYPE=FTBA` (**note** the "A" at the end of the type). This server type will automatically take care of downloading and installing the modpack and appropriate version of Forge, so the `VERSION` does not need to be specified.
 
 ### Environment Variables:
-- `FTB_MODPACK_ID`: **required**, the numerical ID of the modpack to install. The ID can be located by [finding the modpack](https://www.feed-the-beast.com/modpack) and using the "ID" displayed next to the name
-- `FTB_MODPACK_VERSION_ID`: optional, the numerical Id of the version to install. If not specified, the latest version will be installed. The "Version ID" can be obtained by drilling into the Versions tab and clicking a specific version.
+- `FTB_MODPACK_ID`: **required**, the numerical ID of the modpack to install. The ID can be located by [finding the modpack](https://www.feed-the-beast.com/modpack) and locating the ID in this part of the URL:
+  ```
+  https://www.feed-the-beast.com/modpacks/23-ftb-infinity-evolved-17
+                                          ^^
+  ```
+- `FTB_MODPACK_VERSION_ID`: optional, the numerical ID of the version to install. If not specified, the latest version will be installed. The "Version ID" can be obtained by hovering over a server file entry and grabbing [this ID in the URL](docs/ftba-version-id-popup.png).
 
 ### Upgrading
 
@@ -629,12 +610,114 @@ The following example runs the latest version of [FTB Presents Direwolf20 1.12](
 docker run -d --name mc-ftb -e EULA=TRUE \
   -e TYPE=FTBA -e FTB_MODPACK_ID=31 \
   -p 25565:25565 \
-  itzg/minecraft-server:multiarch
+  itzg/minecraft-server:java8-multiarch
 ```
 
 > Normally you will also add `-v` volume for `/data` since the mods and config are installed there along with world data.
 
 ## Running a server with a CurseForge modpack
+
+### Auto CurseForge Management
+
+To manage a CurseForge modpack automatically with upgrade support, pinned or latest version tracking, set `TYPE` to "AUTO_CURSEFORGE". The appropriate mod loader (Forge / Fabric) version will be automatically installed as declared by the modpack. This mode will also take care of cleaning up unused files installed by previous versions of the modpack, but world data is never auto-removed.
+
+> **NOTES:**
+> 
+> A CurseForge API key is **required** to use this feature. Go to their [developer console](https://console.curseforge.com/), generate an API key, and set the environment variable `CF_API_KEY`.  
+>
+> When entering your API Key in a docker compose file you will need to escape any `$` character with a second `$`.  
+>
+> Example if your key is `$11$22$33aaaaaaaaaaaaaaaaaaaaaaaaaa`:
+> ```yaml
+> environment:
+>   CF_API_KEY: '$$11$$22$$33aaaaaaaaaaaaaaaaaaaaaaaaaa'
+> ```
+> If you use `docker run` you will need to make sure to use single quotes:
+> 
+> ```shell
+> docker run ... -e CF_API_KEY='$11$22$33aaaaaaaaaaaaaaaaaaaaaaaaaa'
+> ```
+> 
+> To avoid exposing the API key, it is highly recommended to use a `.env` file, which is [loaded automatically by docker compose](https://docs.docker.com/compose/environment-variables/set-environment-variables/#substitute-with-an-env-file). `$`'s in the value still need to escaped with a second `$` and the variable needs to be referenced from the compose file, such as:
+> ```yaml
+> environment:
+>   CF_API_KEY: ${CF_API_KEY}
+> ```
+>
+> To use the equivalent with `docker run` you need to specify the `.env` file explicitly:
+> ```
+> docker run --env-file=.env itzg/minecraft-server
+> ```
+> 
+> Be sure to use the appropriate [image tag for the Java version compatible with the modpack](#running-minecraft-server-on-different-java-version).
+> 
+> Most modpacks require a good amount of memory, so it best to set `MEMORY` to at least "4G" since the default is only 1 GB.
+
+Use one of the following to specify the modpack to install:
+
+Pass a page URL to the modpack or a specific file with `CF_PAGE_URL` such as the modpack page "https://www.curseforge.com/minecraft/modpacks/all-the-mods-8" or a specific file "https://www.curseforge.com/minecraft/modpacks/all-the-mods-8/files/4248390". For example:
+
+```
+-e TYPE=AUTO_CURSEFORGE -e CF_PAGE_URL=https://www.curseforge.com/minecraft/modpacks/all-the-mods-8
+```
+
+Instead of a URL, the modpack slug can be provided as `CF_SLUG`. The slug is the short identifier visible in the URL after "/modpacks/", such as
+
+![cf-slug](docs/cf-slug.png)
+
+For example:
+```
+-e TYPE=AUTO_CURSEFORGE -e CF_SLUG=all-the-mods-8
+```
+
+If the authors of the modpack have disallowed project distribution, then the desired **client** modpack zip will need to be manually downloaded and made available to the container. The path to that file must be passed to `CF_MODPACK_ZIP`.
+
+The latest file will be located and used by default, but if a specific version is desired you can use one of the following options. With any of these options **do not select a server file** -- they lack the required manifest and defeat the ability to consistently automate startup.
+
+- Use `CF_PAGE_URL`, but include the full URL to a specific file
+- Set `CF_FILE_ID` to the numerical file ID 
+- Specify a substring to match the desired filename with `CF_FILENAME_MATCHER`
+
+The following shows where to get the URL to the specific file and also shows where the file ID is located:
+
+![cf-file-id](docs/cf-file-id.png)
+
+The following examples all refer to version 1.0.7 of ATM8:
+
+```
+-e CF_PAGE_URL=https://www.curseforge.com/minecraft/modpacks/all-the-mods-8/files/4248390
+```
+
+```
+-e CF_SLUG=all-the-mods-8 -e CF_FILE_ID=4248390
+```
+
+```
+-e CF_SLUG=all-the-mods-8 -e CF_FILENAME_MATCHER=1.0.7
+```
+
+Quite often there are mods that need to be excluded, such as ones that did not properly declare as a client mod via the file's game versions. Similarly, there are some mods that are incorrectly tagged as client only. The following describes two options to exclude/include mods:
+
+Global and per modpack exclusions can be declared in a JSON file and referenced with `CF_EXCLUDE_INCLUDE_FILE`. By default, [the file bundled with the image](files/cf-exclude-include.json) will be used, but can be disabled by setting this to an empty string. The schema of this file [is documented here](https://github.com/itzg/mc-image-helper#excludeinclude-file-schema).
+
+Alternatively, they can be excluded by passing a comma or space delimited list of **project** slugs or IDs via `CF_EXCLUDE_MODS`. Similarly, there are some mods that are incorrectly tagged as client only. For those, pass the **project** slugs or IDs via `CF_FORCE_INCLUDE_MODS`. These lists will be combined with the content of the exclude/include file, if given.
+
+A mod's project ID can be obtained from the right hand side of the project page:
+![cf-project-id](docs/cf-project-id.png)
+
+If needing to iterate on the options above, set `CF_FORCE_SYNCHRONIZE` to "true" to ensure the exclude/includes are re-evaluated.
+
+> **NOTE:** these options are provided to empower you to get your server up and running quickly. Please help out by reporting an issue with the respective mod project. Ideally mod developers should [use correct registrations for one-sided client mods](https://docs.minecraftforge.net/en/latest/concepts/sides/#writing-one-sided-mods). Understandably, those code changes may be non-trivial, so mod authors can also add "Client" to the game versions when publishing.
+
+Some modpacks come with world/save data via a worlds file and/or the overrides provided with the modpack. Either approach can be selected to set the `LEVEL` to the resulting saves directory by setting `CF_SET_LEVEL_FROM` to either:
+- `WORLD_FILE`
+- `OVERRIDES`
+
+Other configuration available:
+- `CF_PARALLEL_DOWNLOADS` (default is 4): specify how many parallel mod downloads to perform
+- `CF_OVERRIDES_SKIP_EXISTING` (default is false): if set, files in the overrides that already exist in the data directory are skipped. **NOTE** world data is always skipped, if present.
+
+### Old approach
 
 Enable this server mode by adding `-e TYPE=CURSEFORGE` to your command-line,
 but note the following additional steps needed...
@@ -699,17 +782,19 @@ packwiz modpack defitions are processed before other mod definitions (`MODPACK`,
 There are optional volume paths that can be attached to supply content to be copied into the data area:
 
 `/plugins`
-: contents are synchronized into `/data/plugins` for Bukkit related server types. Set `SYNC_SKIP_NEWER_IN_DESTINATION=false` if you want files from `/plugins` to take precedence over newer files in `/data/plugins`.
+: contents are synchronized into `/data/plugins` for Bukkit related server types. The source can be changed by setting `COPY_PLUGINS_SRC`. The destination can be changed by setting `COPY_PLUGINS_DEST`. Set `SYNC_SKIP_NEWER_IN_DESTINATION=false` if you want files from `/plugins` to take precedence over newer files in `/data/plugins`.
 
 `/mods`
-: contents are synchronized into `/data/mods` for Fabric and Forge related server types. The destination can be changed by setting `COPY_MODS_DEST`.
+: contents are synchronized into `/data/mods` for Fabric and Forge related server types. The source can be changed by setting `COPY_MODS_SRC`. The destination can be changed by setting `COPY_MODS_DEST`.
 
 `/config`
-: contents are synchronized into `/data/config` by default, but can be changed with `COPY_CONFIG_DEST`. For example, `-v ./config:/config -e COPY_CONFIG_DEST=/data` will allow you to copy over files like `bukkit.yml` and so on directly into the server directory. Set `SYNC_SKIP_NEWER_IN_DESTINATION=false` if you want files from `/config` to take precedence over newer files in `/data/config`.
+: contents are synchronized into `/data/config` by default, but can be changed with `COPY_CONFIG_DEST`. The source can be changed by setting `COPY_CONFIG_SRC`. For example, `-v ./config:/config -e COPY_CONFIG_DEST=/data` will allow you to copy over files like `bukkit.yml` and so on directly into the server directory. Set `SYNC_SKIP_NEWER_IN_DESTINATION=false` if you want files from `/config` to take precedence over newer files in `/data/config`.
 
 By default, the [environment variable processing](#replacing-variables-inside-configs) is performed on synchronized files that match the expected suffixes in `REPLACE_ENV_SUFFIXES` (by default "yml,yaml,txt,cfg,conf,properties,hjson,json,tml,toml") and are not excluded by `REPLACE_ENV_VARIABLES_EXCLUDES` and `REPLACE_ENV_VARIABLES_EXCLUDE_PATHS`. This processing can be disabled by setting `REPLACE_ENV_DURING_SYNC` to `false`.
 
-If you want old mods/plugins to be removed before the content is brought over from those attach points, then add `-e REMOVE_OLD_MODS=TRUE`. You can fine tune the removal process by specifying the `REMOVE_OLD_MODS_INCLUDE` and `REMOVE_OLD_MODS_EXCLUDE` variables. By default, everything will be removed. You can also specify the `REMOVE_OLD_MODS_DEPTH` (default is 16) variable to only delete files up to a certain level.
+If you want old mods/plugins to be removed before the content is brought over from those attach points, then add `-e REMOVE_OLD_MODS=TRUE`. You can fine tune the removal process by specifying the `REMOVE_OLD_MODS_INCLUDE` and `REMOVE_OLD_MODS_EXCLUDE` variables, which are comma separated lists of file glob patterns. If a directory is excluded, then it and all of its contents are excluded. By default, only jars are removed. 
+
+You can also specify the `REMOVE_OLD_MODS_DEPTH` (default is 16) variable to only delete files up to a certain level.
 
 For example: `-e REMOVE_OLD_MODS=TRUE -e REMOVE_OLD_MODS_INCLUDE="*.jar" -e REMOVE_OLD_MODS_DEPTH=1` will remove all old jar files that are directly inside the `plugins/` or `mods/` directory.
 
@@ -717,7 +802,7 @@ These paths work well if you want to have a common set of modules in a separate 
 
 > For more flexibility with mods/plugins preparation, you can declare directories to use in [the `MODS` variable](#downloadable-modplugin-pack-for-forge-fabric-and-bukkit-like-servers)
 
-### Auto-downloading SpigotMC/Bukkit/PaperMC plugins
+### Auto-downloading SpigotMC/Bukkit/PaperMC plugins with Spiget
 
 The `SPIGET_RESOURCES` variable can be set with a comma-separated list of SpigotMC resource IDs to automatically download [SpigotMC resources/plugins](https://www.spigotmc.org/resources/) using [the spiget API](https://spiget.org/). Resources that are zip files will be expanded into the plugins directory and resources that are simply jar files will be moved there.
 
@@ -731,6 +816,24 @@ The **resource ID** can be located from the numerical part of the URL after the 
 For example, the following will auto-download the [EssentialsX](https://www.spigotmc.org/resources/essentialsx.9089/) and [Vault](https://www.spigotmc.org/resources/vault.34315/) plugins:
 
     -e SPIGET_RESOURCES=9089,34315
+
+### Auto-download mods from Modrinth
+
+[Modrinth](https://modrinth.com/) is an open source modding platform with a clean, easy to use website for finding [Fabric and Forge mods](https://modrinth.com/mods). At startup, the container will automatically locate and download the newest versions of mod files that correspond to the `TYPE` and `VERSION` in use. Older file versions downloaded previously will automatically be cleaned up.
+
+- **MODRINTH_PROJECTS** : comma separated list of project slugs (short name) or IDs. The project ID can be located in the "Technical information" section. The slug is the part of the page URL that follows `/mod/`:
+  ```
+    https://modrinth.com/mod/fabric-api
+                             ----------
+                              |
+                              +-- project slug
+  ```
+  Also, specific version/type can be declared using colon symbol and version id/type after the project slug. The version id can be found at 'Metadata' section. Valid version types are `release`, `beta`, `alpha`. For instance:
+  ```
+    -e MODRINTH_PROJECTS=fabric-api,fabric-api:PbVeub96,fabric-api:beta
+  ```
+- **MODRINTH_DOWNLOAD_OPTIONAL_DEPENDENCIES**=true : required dependencies of the project will _always_ be downloaded and optional dependencies can also be downloaded by setting this to `true`
+- **MODRINTH_ALLOWED_VERSION_TYPE**=release : the version type is used to determine the newest version to use from each project. The allowed values are `release`, `beta`, `alpha`.
 
 ### Downloadable mod/plugin pack for Forge, Fabric, and Bukkit-like Servers
 
@@ -827,7 +930,9 @@ GENERIC_PACKS_SUFFIX=.zip
 
 would expand to `https://cdn.example.org/configs-v9.0.1.zip,https://cdn.example.org/mods-v4.3.6.zip`.
 
-If applying large generic packs, the update check can be time-consuming since a SHA1 checksum is compared. To skip the update check set `SKIP_GENERIC_PACK_UPDATE_CHECK` to "true". Conversely, the generic pack(s) can be forced to be applied without comparing the checksum by setting `FORCE_GENERIC_PACK_UPDATE` to "true".
+If applying large generic packs, the update can be time-consuming. To skip the update set `SKIP_GENERIC_PACK_UPDATE_CHECK` to "true". Conversely, the generic pack(s) can be forced to be applied by setting `FORCE_GENERIC_PACK_UPDATE` to "true".
+
+The most time consuming portion of the generic pack update is generating and comparing the SHA1 checksum. To skip the checksum generation, set `SKIP_GENERIC_PACK_CHECKSUM` to "true.
 
 ### Mod/Plugin URL Listing File 
 
@@ -892,40 +997,52 @@ The following diagram shows how this option can be used in a compose deployment 
 ### Overwrite world on start
 The world will only be downloaded or copied if it doesn't exist already. Set `FORCE_WORLD_COPY=TRUE` to force overwrite the world on every server start.
 
+### Custom worlds directory path
+To set a custom worlds directory for the Multiverse plugin on a baremetal server, you'd pass the `--world-dir` argument after the jar file.
+In order to accomplish the same in a containerized server, set the `EXTRA_ARGS` environment variable in your command line or docker compose yaml to the same argument string. For example:
+```
+docker run -d -e EXTRA_ARGS='--world-dir ./worlds/'
+```
+`--world-container`, `-W`, and `--universe` are aliases to `--world-dir` and can also be used.
+
 ### Datapacks
 Datapacks can be installed in a similar manner to mods/plugins. There are many environment variables which function in the same way they do for [mods](#working-with-mods-and-plugins): 
-* `DATAPACKS`
-* `DATAPACKS_FILE` 
-* `REMOVE_OLD_DATAPACKS` 
-* `REMOVE_OLD_DATAPACKS_DEPTH` 
-* `REMOVE_OLD_DATAPACKS_INCLUDE`
-* `REMOVE_OLD_DATAPACKS_EXCLUDE`
+
+* `DATAPACKS`: comma-separated list of zip file URL, zip file in container, or directory in container
+* `DATAPACKS_FILE`: a text file within the container where each line is a zip file URL, zip file in container, or directory in container
+* `REMOVE_OLD_DATAPACKS`: if "true" the datapacks directory is removed of everything matching `REMOVE_OLD_DATAPACKS_INCLUDE`, but excluding `REMOVE_OLD_DATAPACKS_EXCLUDE` no deeper than `REMOVE_OLD_DATAPACKS_DEPTH`
+* `REMOVE_OLD_DATAPACKS_DEPTH`: default is 16
+* `REMOVE_OLD_DATAPACKS_INCLUDE`: default is `*.zip`
+* `REMOVE_OLD_DATAPACKS_EXCLUDE`: default is empty
+
 Datapacks will be placed in `/data/$LEVEL/datapacks`
 
 ### VanillaTweaks
 
-VanillaTweaks datapacks can be installed with a share code from the website UI **OR** a json file to specify packs to download and install.
+[VanillaTweaks](https://vanillatweaks.net/) datapacks, crafting tweaks, and resource packs can be installed with a share code from the website **OR** a json file to specify packs to download and install. Datapacks and crafting tweaks will be installed into the current world directory specified by `$LEVEL`. As new versions of the packs are retrieved the previous versions will automatically be cleaned up.
 
-Datapacks will be placed in `/data/$LEVEL/datapacks`
-Resourcepacks will be placed in `/data/resourcepacks`
+The share code is the part following the hash sign, as shown here:
+
+```
+https://vanillatweaks.net/share/#MGr52E
+                                 ------
+                                  |
+                                  +- share code MGr52E
+```
 
 Accepted Parameters:
 
-- `VANILLATWEAKS_FILE`
-- `VANILLATWEAKS_SHARECODE`
-- `REMOVE_OLD_VANILLATWEAKS`
-- `REMOVE_OLD_VANILLATWEAKS_DEPTH`
-- `REMOVE_OLD_VANILLATWEAKS_INCLUDE`
-- `REMOVE_OLD_VANILLATWEAKS_EXCLUDE`
+- `VANILLATWEAKS_FILE`: comma separated list of JSON VanillaTweak pack files accessible within the container
+- `VANILLATWEAKS_SHARECODE`: comma separated list of share codes
 
-Example of expected Vanillatweaks sharecode: 
+Example of expected VanillaTweaks share codes: 
   **Note**: ResourcePacks, DataPacks, and CraftingTweaks all have separate sharecodes
 
 ```yaml
 VANILLATWEAKS_SHARECODE: MGr52E,tF1zL2,LnEDwT
 ```
 
-Example of expected Vanillatweaks file format:
+Example of expected VanillaTweaks files:
 
 ```yaml
 VANILLATWEAKS_FILE: /config/vt-datapacks.json,/config/vt-craftingtweaks.json,/config/vt-resourcepacks.json
@@ -934,11 +1051,12 @@ VANILLATWEAKS_FILE: /config/vt-datapacks.json,/config/vt-craftingtweaks.json,/co
 Datapacks Json:
 ```json
 {
+  "type": "datapacks",
   "version": "1.18",
   "packs": {
     "survival": [
       "graves",
-      "multiplayer sleep",
+      "multiplayer sleep"
     ],
     "items": ["armored elytra"]
   }
@@ -952,8 +1070,7 @@ Resourcepacks Json:
     "version": "1.18",
     "packs": {
         "aesthetic": ["CherryPicking", "BlackNetherBricks", "AlternateBlockDestruction"]
-    },
-    "result": "ok"
+    }
 }
 ```
 
@@ -968,8 +1085,7 @@ CraftingTweaks Json:
             "double slabs",
             "back to blocks"
         ]
-    },
-    "result": "ok"
+    }
 }
 ```
 
@@ -977,13 +1093,7 @@ CraftingTweaks Json:
 
 By default, the server configuration will be created and set based on the following environment variables, but only the first time the server is started. If the `server.properties` file already exists, the values in them will not be changed.
 
-If you would like to override the server configuration each time the container starts up, you can set the `OVERRIDE_SERVER_PROPERTIES` environment variable like:
-
-    docker run -d -e OVERRIDE_SERVER_PROPERTIES=true ...
-
-This will reset any manual configuration of the `server.properties` file, so if you want to make any persistent configuration changes you will need to make sure you have properly set the proper environment variables in your container configuration.
-
-In the opposite case, you can skip the startup script's creation of `server.properties`, by setting `SKIP_SERVER_PROPERTIES` to "true".
+If you prefer to manually manage the `server.properties` file, set `OVERRIDE_SERVER_PROPERTIES` to "false". Similarly, you can entirely skip the startup script's creation of `server.properties` by setting `SKIP_SERVER_PROPERTIES` to "true".
 
 > NOTE: to clear a server property, set the variable to an empty string, such as `-e RESOURCE_PACK=""`. A variables that maps to a server property that is unset, is ignored and the existing `server.property` is left unchanged. 
 
@@ -1007,6 +1117,10 @@ renders
 
 ![](docs/motd-example.png)
 
+To produce a multi-line MOTD, you will need to double escape the newline such as
+
+    -e MOTD="Line one\\nLine two"
+
 ### Difficulty
 
 The difficulty level (default: `easy`) can be set like:
@@ -1022,12 +1136,12 @@ values.
 > **NOTE** it is very important to set this with servers exposed to the internet where you want only limited players to join.
 
 To whitelist players for your Minecraft server, you can:
-- Provide the url or path to a whitelist file via `WHITELIST_FILE` environment variable  
-    `docker run -d -e WHITELIST_FILE=/extra/whitelist.json ...`
 - Provide a list of usernames and/or UUIDs separated by commas via the `WHITELIST` environment variable  
-    `docker run -d -e WHITELIST=user1,uuid2 ...`
+  `docker run -d -e WHITELIST=user1,uuid2 ...`
+- Provide the url or path to a whitelist file via `WHITELIST_FILE` environment variable  
+  `docker run -d -e WHITELIST_FILE=/extra/whitelist.json ...`
 
-To enforce the whitelist and auto-kick players not included in whitelist configuration, set `ENFORCE_WHITELIST=TRUE`. **By default** any user can join your Minecraft server if it's publicly accessible, regardless of your whitelist configuration.
+When either is set, [whitelisting of connecting users](https://minecraft.fandom.com/wiki/Server.properties#white-list) is enabled . If managing the list manually, `ENABLE_WHITELIST` can be set to "true" to set the `white-list` property.
 
 If whitelist configuration already exists, `WHITELIST_FILE` will not be retrieved and any usernames in `WHITELIST` are **added** to the whitelist configuration. You can enforce regeneration of the whitelist on each server startup by setting `OVERRIDE_WHITELIST` to "true". This will delete the whitelist file before processing whitelist configuration.
 
@@ -1037,7 +1151,7 @@ If whitelist configuration already exists, `WHITELIST_FILE` will not be retrieve
 
 > If running Minecraft 1.7.5 or earlier, these variables will apply to `white-list.txt`, with 1.7.6 implementing support for `whitelist.json`. Make sure your `WHITELIST_FILE` is in the appropriate format.
 
-If either `WHITELIST_FILE` or `WHITELIST` is provided, the server property `white-list` is automatically set to `true`, enabline whitelist functionality. Alternatively you can set `ENABLE_WHITELIST=TRUE` to only set the server property `white-list` without modifying the whitelist file. In this case the whitelist can be managed using the `whitelist add` and `whitelist remove` commands. Remember you can set enforcement via the `ENFORCE_WHITELIST` variable.
+To [enforce the whitelist changes immediately](https://minecraft.fandom.com/wiki/Server.properties#enforce-whitelist) when whitelist commands are used , set `ENFORCE_WHITELIST` to "true".
 
 ### Op/Administrator Players
 
@@ -1051,6 +1165,14 @@ If ops configuration already exists, `OPS_FILE` will not be retrieved and any us
 
 > Similar to whitelists, you can provide both `OPS_FILE` and `OPS`, and Minecraft 1.7.5 or earlier will use `ops.txt` rather than `ops.json`.
 
+### Enable/disable initial selection of datapacks
+
+New to [22W42A](https://www.minecraft.net/en-us/article/minecraft-snapshot-22w42a), datapacks with feature flags can be controlled before initial world creation by setting these to a comma separated list of packs:
+
+- `INITIAL_ENABLED_PACKS`
+  such as "update_1_20,bundle"
+- `INITIAL_DISABLED_PACKS`
+
 ### Server icon
 
 A server icon can be configured using the `ICON` variable. The image will be automatically
@@ -1062,13 +1184,17 @@ The server icon which has been set doesn't get overridden by default. It can be 
 
     docker run -d -e ICON=http://..../some/other/image.png -e OVERRIDE_ICON=TRUE...
 
-### Rcon
+### RCON
 
-To use rcon use the `ENABLE_RCON` and `RCON_PASSWORD` variables.
-The default RCON password is _"minecraft",_ but it's **highly** recommended to override that.
-By default rcon port will be `25575` but can easily be changed with the `RCON_PORT` variable.
+RCON is **enabled by default** to allow for graceful shut down the server and coordination of save state during backups. RCON can be disabled by setting `ENABLE_RCON` to "false".
 
-    docker run -d -e ENABLE_RCON=true -e RCON_PASSWORD=testing
+The RCON password can be set via `RCON_PASSWORD` or the name of a file that contains the password can be referenced by setting `RCON_PASSWORD_FILE`. If not set, a random password will be generated at each startup.
+
+Regardless of the password set or defaulted, **DO NOT MAP THE RCON PORT EXTERNALLY** unless you sure that is what you intended. 
+
+> Mapping ports (`-p` command line or `ports` in compose) outside the container and docker networking needs to be a purposeful choice. Most production Docker deployments do not need any of the Minecraft ports mapped externally from the server itself.
+
+By default, the server listens for RCON on port 25575 within the container. It can be changed with `RCON_PORT` but only do this if you have a very good reason. **DO NOT change `rcon.port` via `server.properties`** or integrations will break.
 
 ### Query
 
@@ -1218,30 +1344,9 @@ environment variable set to `false`, such as
 ### Level Type and Generator Settings
 
 By default, a standard world is generated with hills, valleys, water, etc. A different level type can
-be configured by setting `LEVEL_TYPE` to an expected type, for example
+be configured by setting `LEVEL_TYPE` to [an expected type listed here](https://minecraft.fandom.com/wiki/Server.properties#level-type).
 
-- DEFAULT
-- FLAT
-- LARGEBIOMES
-- AMPLIFIED
-- CUSTOMIZED
-- BUFFET
-- BIOMESOP (Biomes O' Plenty for 1.12 and older)
-- BIOMESOPLENTY (Biomes O' Plenty for 1.15 and above)
-
-Descriptions are available at the [gamepedia](http://minecraft.gamepedia.com/Server.properties).
-
-When using a level type of `FLAT`, `CUSTOMIZED`, and `BUFFET`, you can further configure the world generator
-by passing [custom generator settings](http://minecraft.gamepedia.com/Superflat).
-**Since generator settings usually have ;'s in them, surround the -e value with a single quote, like below.**
-
-For example (just the `-e` bits):
-
-    -e LEVEL_TYPE=flat -e 'GENERATOR_SETTINGS=3;minecraft:bedrock,3*minecraft:stone,52*minecraft:sandstone;2;'
-
-In Minecraft 1.13+ you need to pass json ([generator site](https://misode.github.io/world/)) like this (details see [here](https://github.com/itzg/docker-minecraft-server/issues/999#issuecomment-907849644)):
-
-    -e LEVEL_TYPE=flat -e 'GENERATOR_SETTINGS={"biome":"minecraft:the_void","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:stone","height":10},{"block":"minecraft:dirt","height":1}],"structures":{"structures":{}}}'
+For some of the level types, `GENERATOR_SETTINGS` can be used to further customize the world generation [as described here](https://minecraft.fandom.com/wiki/Server.properties#generator-settings).
 
 ### Custom Server Resource Pack
 
@@ -1330,7 +1435,27 @@ Variables that you want to replace need to be declared inside curly brackets and
 
 You can also change `REPLACE_ENV_VARIABLE_PREFIX`, which defaults to "CFG_", to limit which environment variables are allowed to be used. For example, with "CFG_" as the prefix, the variable `${CFG_DB_HOST}` would be subsituted, but not `${DB_HOST}`.
 
-If you want to use a file for value (like when use secrets) you can add suffix `_FILE` to your variable name.
+If you want to use a file's content for value, such as when using secrets mounted as files, declare the placeholder named like normal in the file and declare an environment variable named the same but with the suffix `_FILE`. 
+
+For example, a `my.cnf` file could contain:
+
+```
+[client]
+password = ${CFG_DB_PASSWORD}
+```
+
+...a secret declared in the compose file with:
+```yaml
+secrets:
+  db_password:
+    external: true
+```
+
+...and finally the environment variable would be named with a `_FILE` suffix and point to the mounted secret:
+```yaml
+    environment:
+      CFG_DB_PASSWORD_FILE: /run/secrets/db_password
+```
 
 Variables will be replaced in files with the following extensions:
 `.yml`, `.yaml`, `.txt`, `.cfg`, `.conf`, `.properties`.
@@ -1488,12 +1613,48 @@ To let the JVM calculate the heap size from the container declared memory limit,
 
 General JVM options can be passed to the Minecraft Server invocation by passing a `JVM_OPTS`
 environment variable. The JVM requires `-XX` options to precede `-X` options, so those can be declared in `JVM_XX_OPTS`. Both variables are space-delimited, raw JVM arguments.
+
 ```
--e JVM_OPTS="-someJVMOption someJVMOptionValue"
+docker run ... -e JVM_OPTS="-someJVMOption someJVMOptionValue" ...
 ```
 
-For some cases, if e.g. after removing mods, it could be necessary to startup minecraft with an additional `-D` parameter like `-Dfml.queryResult=confirm`. To address this you can use the environment variable `JVM_DD_OPTS`, which builds the params from a given list of values separated by space, but without the `-D` prefix. To make things running under systems (e.g. Plesk), which doesn't allow `=` inside values, a `:` (colon) could be used instead. The upper example would look like this:
-`JVM_DD_OPTS=fml.queryResult:confirm`, and will be converted to `-Dfml.queryResult=confirm`.
+**NOTE** When declaring `JVM_OPTS` in a compose file's `environment` section with list syntax, **do not** include the quotes:
+
+```yaml
+    environment:
+      - EULA=true
+      - JVM_OPTS=-someJVMOption someJVMOptionValue 
+```
+
+Using object syntax is recommended and more intuitive:
+
+```yaml
+    environment:
+      EULA: "true"
+      JVM_OPTS: "-someJVMOption someJVMOptionValue"
+# or
+#     JVM_OPTS: -someJVMOption someJVMOptionValue
+```
+
+As a shorthand for passing several system properties as `-D` arguments, you can instead pass a comma separated list of `name=value` or `name:value` pairs with `JVM_DD_OPTS`. (The colon syntax is provided for management platforms like Plesk that don't allow `=` inside a value.)
+
+For example, instead of passing
+
+```yaml
+  JVM_OPTS: -Dfml.queryResult=confirm -Dname=value
+```
+
+you can use
+
+```yaml
+  JVM_DD_OPTS: fml.queryResult=confirm,name=value
+```
+
+### Extra Arguments
+
+Arguments that would usually be passed to the jar file (those which are written after the filename) can be passed via the `EXTRA_ARGS` environment variable.
+
+See [Custom worlds directory path](#custom-worlds-directory-path) for an example.
 
 ### Interactive and Color Console
 
@@ -1566,7 +1727,7 @@ To enable remote JMX, such as for profiling with VisualVM or JMC, add the enviro
 
 ### Enable Aikar's Flags
 
-[Aikar has does some research](https://aikar.co/2018/07/02/tuning-the-jvm-g1gc-garbage-collector-flags-for-minecraft/) into finding the optimal JVM flags for GC tuning, which becomes more important as more users are connected concurrently. The set of flags documented there can be added using
+[Aikar has done some research](https://aikar.co/2018/07/02/tuning-the-jvm-g1gc-garbage-collector-flags-for-minecraft/) into finding the optimal JVM flags for GC tuning, which becomes more important as more users are connected concurrently. The set of flags documented there can be added using
 
     -e USE_AIKAR_FLAGS=true
 
@@ -1603,7 +1764,15 @@ To enable the JVM flags required to fully support the [Flare profiling suite](ht
     
     -e USE_FLARE_FLAGS=true
     
-Flare is built-in to Airplane/Pufferfish/Purpur, and is available in [plugin form](https://github.com/TECHNOVE/FlarePlugin) for other server types.
+Flare is built-in to Pufferfish/Purpur, and is available in [plugin form](https://github.com/TECHNOVE/FlarePlugin) for other server types.
+
+### Enable support for optimized SIMD operations
+
+To enable support for optimized SIMD operations, the JVM flag can be set with the following variable:
+
+    -e USE_SIMD_FLAGS=true
+
+SIMD optimized operations are supported by Pufferfish and Purpur.
 
 ### Enable timestamps in init logs
 
@@ -1617,6 +1786,75 @@ To also include the timestamp with each log, set `LOG_TIMESTAMP` to "true". The 
 
 ```
 [init] 2022-02-05 16:58:33+00:00 Starting the Minecraft server...
+```
+
+### Auto-execute RCON commands
+
+RCON commands can be configured to execute when the server starts, a client connects, or a client disconnects.
+
+> When declaring several commands within a compose file environment variable, it's easiest to use YAML's `|-` [block style indicator](https://yaml-multiline.info/).
+
+**On Server Start:**
+
+```yaml
+      RCON_CMDS_STARTUP:  |-
+        gamerule doFireTick false
+        pregen start 200
+```
+
+**On Client Connection:**
+
+```yaml
+      RCON_CMDS_ON_CONNECT:  |-
+        team join New @a[team=]
+```
+
+**Note:**
+* On client connect we only know there was a connection, and not who connected. RCON commands will need to be used for that.
+
+**On Client Disconnect:**
+
+```yaml
+      RCON_CMDS_ON_DISCONNECT:  |-
+        gamerule doFireTick true
+```
+
+**On First Client Connect**
+
+```yaml
+      RCON_CMDS_FIRST_CONNECT: |-
+        pregen stop
+```
+
+**On Last Client Disconnect**
+
+```yaml
+      RCON_CMDS_LAST_DISCONNECT: |-
+        kill @e[type=minecraft:boat]
+        pregen start 200
+
+```
+
+**Example of rules for new players**
+
+Uses team NEW and team OLD to track players on the server. So move player with no team to NEW, run a command, move them to team OLD.
+[Reference Article](https://www.minecraftforum.net/forums/minecraft-java-edition/redstone-discussion-and/2213523-detect-players-first-join)
+
+```yaml
+      RCON_CMDS_STARTUP:  |-
+        /pregen start 200
+        /gamerule doFireTick false
+        /team add New
+        /team add Old
+      RCON_CMDS_ON_CONNECT: |-
+        /team join New @a[team=]
+        /give @a[team=New] birch_boat
+        /team join Old @a[team=New]
+      RCON_CMDS_FIRST_CONNECT: |-
+        /pregen stop
+      RCON_CMDS_LAST_DISCONNECT: |-
+        /kill @e[type=minecraft:boat]
+        /pregen start 200
 ```
 
 ## Autopause
@@ -1636,6 +1874,8 @@ Of course, even loaded chunks are not ticked when the process is stopped.
 On startup the `server.properties` file is checked and, if applicable, a warning is printed to the terminal. When the server is created (no data available in the persistent directory), the properties file is created with the Watchdog disabled.
 
 The utility used to wake the server (`knock(d)`) works at network interface level. So the correct interface has to be set using the `AUTOPAUSE_KNOCK_INTERFACE` variable when using non-default networking environments (e.g. host-networking, Portainer oder NAS solutions). See the description of the variable below.
+
+A file called `.paused` is created in `/data` directory when the server is paused and removed when the server is resumed. Other services may check for this file's existence before waking the server.
 
 A starting, example compose file has been provided in [examples/docker-compose-autopause.yml](examples/docker-compose-autopause.yml).
 
@@ -1663,6 +1903,23 @@ The following environment variables define the behaviour of auto-pausing:
 * `AUTOPAUSE_KNOCK_INTERFACE`, default `eth0`
   <br>Describes the interface passed to the `knockd` daemon. If the default interface does not work, run the `ifconfig` command inside the container and derive the interface receiving the incoming connection from its output. The passed interface must exist inside the container. Using the loopback interface (`lo`) does likely not yield the desired results.
 
+> To troubleshoot, add `DEBUG_AUTOPAUSE=true` to see additional output
+
+### Rootless Autopause
+
+If you're running the container as rootless, you might need to set change the default port forwarder from RootlessKit to slirp4netns.
+
+For Docker, see the following for setup:
+* https://docs.docker.com/engine/security/rootless/#networking-errors
+* https://rootlesscontaine.rs/getting-started/docker/#changing-the-port-forwarder
+
+For Podman, see the following for setup:
+* https://rootlesscontaine.rs/getting-started/podman/#changing-the-port-forwarder
+* Run with
+  ```
+  -e AUTOPAUSE_KNOCK_INTERFACE=tap0 --cap-add=CAP_NET_RAW --network slirp4netns:port_handler=slirp4netns
+  ```
+
 ## Autostop
 
 An option to stop the server after a specified time has been added for niche applications (e.g. billing saving on AWS Fargate). The function is incompatible with the Autopause functionality, as they basically cancel out each other.
@@ -1685,6 +1942,8 @@ The following environment variables define the behaviour of auto-stopping:
 * `AUTOSTOP_PERIOD`, default `10` (seconds)
   describes period of the daemonized state machine, that handles the stopping of the server
 
+> To troubleshoot, add `DEBUG_AUTOSTOP=true` to see additional output
+
 ## Running on RaspberryPi
 
 To run this image on a RaspberryPi 3 B+, 4, or newer, use any of the image tags [list in the Java version section](#running-minecraft-server-on-different-java-version) that specify `armv7` for the architecture, which includes `itzg/minecraft-server:latest`.
@@ -1692,6 +1951,10 @@ To run this image on a RaspberryPi 3 B+, 4, or newer, use any of the image tags 
 > NOTE: you may need to lower the memory allocation, such as `-e MEMORY=750m`
 
 > If experiencing issues such as "sleep: cannot read realtime clock: Operation not permitted", ensure `libseccomp` is up to date on your host. In some cases adding `:Z` flag to the `/data` mount may be needed, [but use cautiously](https://docs.docker.com/storage/bind-mounts/#configure-the-selinux-label).
+
+## Mitigated Log4jShell Vulnerability
+
+**Please ensure you have pulled the latest image** since [all official mitigations](https://www.minecraft.net/en-us/article/important-message--security-vulnerability-java-edition) are automatically applied by the container startup process.
 
 ## Contributing
     

@@ -1,5 +1,5 @@
 #!/bin/bash
-
+. "/start-utils"
 : "${CONSOLE_IN_NAMED_PIPE:=/tmp/minecraft-console-in}"
 
 if [ $# = 0 ]; then
@@ -12,4 +12,12 @@ if [ ! -p "${CONSOLE_IN_NAMED_PIPE}" ]; then
   exit 1
 fi
 
-gosu minecraft bash -c "echo $* > '${CONSOLE_IN_NAMED_PIPE:-/tmp/minecraft-console-in}'"
+if [ "$(id -u)" = 0 ]; then
+  if [[ $(getDistro) == alpine ]]; then
+    exec su-exec minecraft bash -c "echo $* > '${CONSOLE_IN_NAMED_PIPE:-/tmp/minecraft-console-in}'"
+  else
+    exec gosu minecraft bash -c "echo $* > '${CONSOLE_IN_NAMED_PIPE:-/tmp/minecraft-console-in}'"
+  fi
+else
+  echo "$@" >"${CONSOLE_IN_NAMED_PIPE:-/tmp/minecraft-console-in}"
+fi

@@ -4,13 +4,27 @@
 . "${SCRIPTS:-/}start-utils"
 
 : "${SERVER_PORT:=25565}"
+: "${ENABLE_AUTOPAUSE:=false}"
+: "${AUTOPAUSE_TIMEOUT_EST:=3600}"
+: "${AUTOPAUSE_TIMEOUT_KN:=120}"
+: "${AUTOPAUSE_TIMEOUT_INIT:=600}"
+: "${AUTOPAUSE_PERIOD:=10}"
+: "${AUTOPAUSE_KNOCK_INTERFACE:=eth0}"
+: "${DEBUG_AUTOPAUSE:=false}"
 export SERVER_PORT
+export ENABLE_AUTOPAUSE
+export AUTOPAUSE_TIMEOUT_EST
+export AUTOPAUSE_TIMEOUT_KN
+export AUTOPAUSE_TIMEOUT_INIT
+export AUTOPAUSE_PERIOD
+export AUTOPAUSE_KNOCK_INTERFACE
+export DEBUG_AUTOPAUSE
 
 log "Autopause functionality enabled"
 
 isDebugging && set -x
 
-cp /autopause/knockd-config.cfg /tmp/knockd-config.cfg
+cp /auto/knockd-config.cfg /tmp/knockd-config.cfg
 
 # update server port to listen to
 regseq="^\s*sequence\s*=\s*$SERVER_PORT\s*$"
@@ -70,4 +84,9 @@ elif [[ -z "$MAX_TICK_TIME" ]] ; then
   export MAX_TICK_TIME
 fi
 
-/autopause/autopause-daemon.sh &
+# seq_cooldown cannot be larger than AUTOPAUSE_TIMEOUT_KN, otherwise the server may
+# become paused while knockd is still ignoring packets, preventing players from joining.
+let COOLDOWN=$AUTOPAUSE_TIMEOUT_KN/2
+sed -i "s/\(seq_cooldown *= *\).*/\1$COOLDOWN/" /tmp/knockd-config.cfg
+
+/auto/autopause-daemon.sh &

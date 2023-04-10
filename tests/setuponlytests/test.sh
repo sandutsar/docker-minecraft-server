@@ -15,6 +15,13 @@ $logs
 "
 }
 
+delta() {
+  startTime=${1?}
+
+  endTime=$(date +%s)
+  echo "$(( endTime - startTime )) seconds"
+}
+
 # tests that only run the setup files for things like downloads and configuration.
 setupOnlyMinecraftTest(){
   folder=$1
@@ -32,22 +39,27 @@ setupOnlyMinecraftTest(){
     fi
   fi
 
-  if ! logs=$(docker-compose run mc 2>&1); then
+  # false positive since it's used in delta calculations below
+  # shellcheck disable=SC2034
+  start=$(date +%s)
+  if ! logs=$(docker compose run --rm -e SETUP_ONLY=true -e DEBUG="${DEBUG:-false}" mc 2>&1); then
     outputContainerLog "$logs"
     result=1
   elif [ -f verify.sh ]; then
     if ! docker run --rm --entrypoint bash -v "${PWD}/data":/data -v "${PWD}/verify.sh":/verify "${IMAGE_TO_TEST:-itzg/minecraft-server}" -e /verify; then
-      echo "${folder} verify FAILED"
+      endTime=$(date +%s)
+      echo "${folder} FAILED verify in $(delta start)"
       outputContainerLog "$logs"
       result=1
     else
-      echo "${folder} verify PASS"
+      endTime=$(date +%s)
+      echo "${folder} PASSED verify in $(delta start)"
     fi
   else
-    echo "${folder} PASS"
+    echo "${folder} PASSED in $(delta start)"
   fi
 
-  docker-compose down -v --remove-orphans > /dev/null
+  docker compose down -v --remove-orphans >& /dev/null
   cd ..
 
   return $result

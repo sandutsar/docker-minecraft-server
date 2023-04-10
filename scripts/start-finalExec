@@ -1,20 +1,42 @@
 #!/bin/bash
 
+: "${DEBUG_EXEC:=false}"
+: "${SETUP_ONLY:=false}"
+
 # shellcheck source=start-utils
 . "${SCRIPTS:-/}start-utils"
 isDebugging && set -x
 
 if [ -n "$ICON" ]; then
-    if [ ! -e server-icon.png ] || [ "${OVERRIDE_ICON}" == "TRUE" ]; then
+    if [ ! -e server-icon.png ] || isTrue "${OVERRIDE_ICON}"; then
       log "Using server icon from $ICON..."
-      # Not sure what it is yet...call it "img"
-      curl -sSL -o /tmp/icon.img $ICON
-      specs=$(identify /tmp/icon.img | awk '{print $2,$3}')
-      if [ "$specs" = "PNG 64x64" ]; then
-        mv /tmp/icon.img /data/server-icon.png
+      if isURL "$ICON"; then
+        # Not sure what it is yet...call it "img"
+        if ! get -o /tmp/icon.img "$ICON"; then
+          log "ERROR: failed to download icon from $ICON"
+          exit 1
+        fi
+        ICON=/tmp/icon.img
+        iconSrc="url"
+      elif [ -f "$ICON" ]; then
+        iconSrc="file"
+      else
+        log "ERROR: $ICON does not appear to be a URL or existing file"
+        exit 1
+      fi
+      read -r -a specs < <(identify "$ICON" | awk 'NR == 1 { print $2, $3 }')
+      if [ "${specs[0]} ${specs[1]}" = "PNG 64x64" ]; then
+        if [ $iconSrc = url ]; then
+          mv -f /tmp/icon.img /data/server-icon.png
+        else
+          cp -f "$ICON" /data/server-icon.png
+        fi
+      elif [ "${specs[0]}" = GIF ]; then
+        log "Converting GIF image to 64x64 PNG..."
+        convert "$ICON"[0] -resize 64x64! /data/server-icon.png
       else
         log "Converting image to 64x64 PNG..."
-        convert /tmp/icon.img -resize 64x64! /data/server-icon.png
+        convert "$ICON" -resize 64x64! /data/server-icon.png
       fi
     fi
 fi
@@ -64,22 +86,12 @@ if isTrue ${ENABLE_ROLLING_LOGS:-false}; then
   LOGFILE="/data/log4j2.xml"
   if [ ! -e "$LOGFILE" ]; then
     log "Creating log4j2.xml in ${LOGFILE}"
-    cp /tmp/log4j2.xml "$LOGFILE"
+    cp /image/log4j2.xml "$LOGFILE"
   else
     log "log4j2.xml already created, skipping"
   fi
   JVM_OPTS="-Dlog4j.configurationFile=/data/log4j2.xml ${JVM_OPTS}"
 fi
-
-# Make sure files exist and are valid JSON (for pre-1.12 to 1.12 upgrades)
-log "Checking for JSON files."
-JSON_FILES=$(find /data -maxdepth 1 -name '*.json')
-for j in $JSON_FILES; do
-  if [[ $(cat "$j" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//') == "" ]]; then
-    log "Fixing JSON $j"
-    echo '[]' > $j
-  fi
-done
 
 # Optional disable console
 if versionLessThan 1.14 && [[ ${CONSOLE,,} = false ]]; then
@@ -91,9 +103,6 @@ if [[ ${GUI,,} = false ]]; then
   EXTRA_ARGS+=" nogui"
 fi
 
-: "${INIT_MEMORY:=${MEMORY}}"
-: "${MAX_MEMORY:=${MEMORY}}"
-
 expandedDOpts=
 if [ -n "$JVM_DD_OPTS" ]; then
       for dopt in $JVM_DD_OPTS
@@ -102,8 +111,8 @@ if [ -n "$JVM_DD_OPTS" ]; then
       done
 fi
 
-if isTrue ${ENABLE_JMX}; then
-  : ${JMX_PORT:=7091}
+if isTrue "${ENABLE_JMX}"; then
+  : "${JMX_PORT:=7091}"
   JVM_OPTS="${JVM_OPTS}
   -Dcom.sun.management.jmxremote.local.only=false
   -Dcom.sun.management.jmxremote.port=${JMX_PORT}
@@ -166,6 +175,12 @@ if isTrue "${USE_FLARE_FLAGS}"; then
   "
 fi
 
+if isTrue "${USE_SIMD_FLAGS}"; then
+  JVM_XX_OPTS="${JVM_XX_OPTS}
+  --add-modules=jdk.incubator.vector
+  "
+fi
+
 if isTrue "${DEBUG_MEMORY}"; then
   log "Memory usage and availability (in MB)"
   uname -a
@@ -188,7 +203,7 @@ function copyFilesForCurseForge() {
   [ -f /data/ops.txt ] && cp -f /data/ops.txt "${FTB_DIR}/"
   [ -f /data/white-list.txt ] && cp -f /data/white-list.txt "${FTB_DIR}/"
 
-  if [ ! -e "${FTB_DIR}/server-icon.png" -a -e /data/server-icon.png ]; then
+  if [ ! -e "${FTB_DIR}/server-icon.png" ] && [ -e /data/server-icon.png ]; then
     cp -f /data/server-icon.png "${FTB_DIR}/"
   fi
 
@@ -208,10 +223,10 @@ if [[ ${TYPE} == "CURSEFORGE" && "${SERVER}" ]]; then
 
   cd "${FTB_DIR}" || (log "ERROR: can't go into ${FTB_DIR}"; exit 1)
   log "Starting CurseForge server in ${FTB_DIR}..."
-  if isTrue ${DEBUG_EXEC}; then
+  if isTrue "${DEBUG_EXEC}"; then
     set -x
   fi
-  exec mc-server-runner ${bootstrapArgs} "${mcServerRunnerArgs[@]}" java $JVM_XX_OPTS $JVM_OPTS $expandedDOpts -jar $(basename "${SERVER}") "$@" $EXTRA_ARGS
+  exec mc-server-runner ${bootstrapArgs} "${mcServerRunnerArgs[@]}" java $JVM_XX_OPTS $JVM_OPTS $expandedDOpts -jar "$(basename "${SERVER}")" "$@" $EXTRA_ARGS
 elif [[ ${TYPE} == "CURSEFORGE" ]]; then
   mcServerRunnerArgs+=(--shell bash)
 
@@ -233,15 +248,15 @@ EOF
 
   finalArgs="${FTB_SERVER_START}"
 
-  if isTrue "${SETUP_ONLY:=false}"; then
+  if isTrue "${SETUP_ONLY}"; then
     echo "SETUP_ONLY: ${finalArgs}"
     exit
   fi
 
-  if isTrue ${DEBUG_EXEC}; then
+  if isTrue "${DEBUG_EXEC}"; then
     set -x
   fi
-  if isTrue ${EXEC_DIRECTLY:-false}; then
+  if isTrue "${EXEC_DIRECTLY:-false}"; then
     "${finalArgs[@]}"
   else
     exec mc-server-runner "${mcServerRunnerArgs[@]}" "${finalArgs[@]}"
@@ -249,7 +264,7 @@ EOF
 elif [[ $SERVER =~ run.sh ]]; then
   log "Using Forge supplied run.sh script..."
   echo $JVM_XX_OPTS $JVM_OPTS $expandedDOpts > user_jvm_args.txt
-  if isTrue ${SETUP_ONLY:=false}; then
+  if isTrue ${SETUP_ONLY}; then
     echo "SETUP_ONLY: bash ${SERVER}"
     exit
   fi
@@ -262,6 +277,7 @@ else
 
   log "Starting the Minecraft server..."
 
+  # shellcheck disable=SC2206
   finalArgs=(
     $JVM_XX_OPTS
     $JVM_OPTS
@@ -270,7 +286,7 @@ else
     "$@" $EXTRA_ARGS
   )
 
-  if isTrue ${SETUP_ONLY:=false}; then
+  if isTrue ${SETUP_ONLY}; then
     echo "SETUP_ONLY: java ${finalArgs[*]}"
     exit
   fi

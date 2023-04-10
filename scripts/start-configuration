@@ -7,7 +7,24 @@ IFS=$'\n\t'
 
 : "${EULA:=}"
 : "${PROXY:=}"
+: "${ENABLE_AUTOPAUSE:=false}"
+: "${ENABLE_AUTOSTOP:=false}"
+: "${RCON_CMDS_STARTUP:=}"
+: "${RCON_CMDS_ON_CONNECT:=}"
+: "${RCON_CMDS_ON_DISCONNECT:=}"
+: "${RCON_CMDS_FIRST_CONNECT:=}"
+: "${RCON_CMDS_LAST_DISCONNECT:=}"
+: "${RCON_CMDS_PERIOD:=10}"
 : "${RCON_PASSWORD_FILE:=}"
+: "${ENABLE_RCON:=true}"
+: "${RCON_PASSWORD:=minecraft}"
+: "${RCON_PORT:=25575}"
+export ENABLE_RCON RCON_PASSWORD RCON_PORT
+
+: "${MEMORY=1G}"
+: "${INIT_MEMORY=${MEMORY}}"
+: "${MAX_MEMORY=${MEMORY}}"
+export MEMORY INIT_MEMORY MAX_MEMORY
 
 shopt -s nullglob
 
@@ -66,6 +83,9 @@ if [[ $RCON_PASSWORD_FILE ]]; then
     log ""
 fi
 
+# For rcon-cli access
+echo "password=${RCON_PASSWORD}" > "$HOME/.rcon-cli.env"
+
 function fixJavaPath() {
   # Some Docker management UIs grab all the image declared variables and present them for configuration.
   # When upgrading images across Java versions, that creates a mismatch in PATH's expected by base image.
@@ -110,18 +130,32 @@ case "X$VERSION" in
   ;;
 esac
 export VANILLA_VERSION
-log "Resolved version given ${VERSION} into ${VANILLA_VERSION}"
+MAJOR_VANILLA_VERSION=$(get_major_version "$VANILLA_VERSION")
+export MAJOR_VANILLA_VERSION
+log "Resolved version given ${VERSION} into ${VANILLA_VERSION} and major version ${MAJOR_VANILLA_VERSION}"
 
 cd /data || exit 1
 
 export ORIGINAL_TYPE=${TYPE^^}
 
 if isTrue "${ENABLE_AUTOPAUSE}"; then
-  ${SCRIPTS:-/}start-autopause
+  "${SCRIPTS:-/}start-autopause"
 fi
 
 if isTrue "${ENABLE_AUTOSTOP}"; then
-  ${SCRIPTS:-/}start-autostop
+  "${SCRIPTS:-/}start-autostop"
+fi
+
+if 
+  [[ "$RCON_CMDS_STARTUP" ]] ||
+  [[ "$RCON_CMDS_ON_CONNECT" ]] ||
+  [[ "$RCON_CMDS_ON_DISCONNECT" ]] || 
+  [[ "$RCON_CMDS_FIRST_CONNECT" ]] || 
+  [[ "$RCON_CMDS_LAST_DISCONNECT" ]]
+then
+  log "Starting RCON commands"
+  # shellcheck source=start-rconcmds
+  "${SCRIPTS:-/}start-rconcmds"
 fi
 
 if versionLessThan 1.7; then
@@ -151,6 +185,10 @@ case "${TYPE^^}" in
     exec "${SCRIPTS:-/}start-deployFabric" "$@"
   ;;
 
+  QUILT)
+    exec "${SCRIPTS:-/}start-deployQuilt" "$@"
+  ;;
+  
   FTBA)
     evaluateJavaCompatibilityForForge
     exec "${SCRIPTS:-/}start-deployFTBA" "$@"
@@ -160,6 +198,11 @@ case "${TYPE^^}" in
     evaluateJavaCompatibilityForForge
     exec "${SCRIPTS:-/}start-deployCF" "$@"
   ;;
+
+  AUTO_CURSEFORGE)
+    evaluateJavaCompatibilityForForge
+    exec "${SCRIPTS:-/}start-deployAutoCF" "$@"
+    ;;
 
   VANILLA)
     exec "${SCRIPTS:-/}start-deployVanilla" "$@"
@@ -189,12 +232,13 @@ case "${TYPE^^}" in
     exec "${SCRIPTS:-/}start-deployCatserver" "$@"
   ;;
 
-  PURPUR)
-    exec "${SCRIPTS:-/}start-deployPurpur" "$@"
+  LOLISERVER)
+    evaluateJavaCompatibilityForForge
+    exec "${SCRIPTS:-/}start-deployLoliserver" "$@"
   ;;
 
-  AIRPLANE)
-    exec "${SCRIPTS:-/}start-deployAirplane" "$@"
+  PURPUR)
+    exec "${SCRIPTS:-/}start-deployPurpur" "$@"
   ;;
 
   PUFFERFISH)
@@ -223,7 +267,7 @@ case "${TYPE^^}" in
       log "Invalid type: '$TYPE'"
       log "Must be: VANILLA, FORGE, BUKKIT, SPIGOT, PAPER, FTBA (multiarch-only),"
       log "         CURSEFORGE, SPONGEVANILLA, PURPUR, CUSTOM,"
-      log "         MAGMA, MOHIST, CATSERVER, AIRPLANE, PUFFERFISH, CANYON, LIMBO, CRUCIBLE"
+      log "         MAGMA, MOHIST, CATSERVER, LOLISERVER, AIRPLANE, PUFFERFISH, CANYON, LIMBO, CRUCIBLE"
       exit 1
   ;;
 

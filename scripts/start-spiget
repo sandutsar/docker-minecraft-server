@@ -2,11 +2,15 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-. ${SCRIPTS:-/}start-utils
+# shellcheck source=start-utils
+. "${SCRIPTS:-/}start-utils"
 handleDebugMode
 
-: ${SPIGET_RESOURCES:=}
-: ${SPIGET_DOWNLOAD_TOLERANCE:=5} # in minutes
+: "${SPIGET_RESOURCES:=}"
+: "${SPIGET_DOWNLOAD_TOLERANCE:=5}" # in minutes
+: "${REMOVE_OLD_MODS_INCLUDE:=*.jar,*-version.json}"
+
+acceptArgs=(--accept application/zip --accept application/java-archive --accept application/octet-stream)
 
 containsJars() {
   file=${1?}
@@ -17,7 +21,7 @@ containsJars() {
     if [[ $line =~ $pat ]]; then
       return 0
     fi
-  done <<<$(unzip -l "$file")
+  done < <(unzip -l "$file" | tail -n +4)
 
   return 1
 }
@@ -31,7 +35,7 @@ containsPlugin() {
     if [[ $line =~ $pat ]]; then
       return 0
     fi
-  done <<<$(unzip -l "$file")
+  done < <(unzip -l "$file" | tail -n +4)
 
   return 1
 }
@@ -44,21 +48,25 @@ getResourceFromSpiget() {
   mkdir -p /data/plugins
 
   versionfile="/data/plugins/.${resource}-version.json"
-  versionfileNew="/tmp/.${resource}-version.json"
+  versionfileNew="${versionfile}.tmp"
 
   if [ -f "$versionfile" ]; then
     if [[ -n $(find "$versionfile" -mmin +${SPIGET_DOWNLOAD_TOLERANCE}) ]]; then
       urlVersion="https://api.spiget.org/v2/resources/${resource}/versions/latest"
-      if ! curl -o "${versionfileNew}" -fsSL -H "User-Agent: itzg/minecraft-server" "${extraCurlArgs[@]}" "${urlVersion}"; then
+      if ! get -o "${versionfileNew}" "${urlVersion}"; then
         log "ERROR failed to download resource version meta data '${resource}' from ${urlVersion}"
         exit 2
       fi
 
-      installedVersion=$(jq -r '.name' $versionfile)
+      if isTrue "${REMOVE_OLD_MODS:-false}"; then
+        installedVersion=0.0.0
+      else
+        installedVersion=$(jq -r '.name' $versionfile)
+      fi
       newVersion=$(jq -r '.name' $versionfileNew)
       
       if [ "$installedVersion" = "$newVersion" ]; then
-        log "resource '${resource}' not downloaded because installed version '${installedVersion}' already up to date ('${newVersion}')"
+        log "Resource '${resource}': installed version '${installedVersion}' already up to date"
         mv "${versionfileNew}" "${versionfile}"
       else
         if downloadResourceFromSpiget "${resource}"; then
@@ -71,7 +79,7 @@ getResourceFromSpiget() {
   else
     if downloadResourceFromSpiget "${resource}"; then
       urlVersion="https://api.spiget.org/v2/resources/${resource}/versions/latest"
-      if ! curl -o "${versionfileNew}" -fsSL -H "User-Agent: itzg/minecraft-server" "${extraCurlArgs[@]}" "${urlVersion}"; then
+      if ! get -o "${versionfileNew}" "${urlVersion}"; then
         log "ERROR failed to download resource version meta data '${resource}' from ${urlVersion}"
         exit 2
       fi
@@ -84,29 +92,37 @@ getResourceFromSpiget() {
 downloadResourceFromSpiget() {
   resource=${1?}
 
-  tmpfile="/tmp/${resource}.zip"
-  url="https://api.spiget.org/v2/resources/${resource}/download"
-  if ! curl -o "${tmpfile}" -fsSL -H "User-Agent: itzg/minecraft-server" "${extraCurlArgs[@]}" "${url}"; then
-    log "ERROR failed to download resource '${resource}' from ${url}"
-    exit 2
+  tempDir="/data/plugins/tmp-${resource}"
+  mkdir -p $tempDir
+  resourceUrl="https://api.spiget.org/v2/resources/${resource}"
+  if ! outfile=$(get_silent --output-filename -o $tempDir "${acceptArgs[@]}" "${resourceUrl}/download"); then
+    log "ERROR: failed to download resource '${resource}' from ${resourceUrl}/download"
+    if externalUrl=$(get --json-path '$.file.externalUrl' "${resourceUrl}"); then
+      log "       Visit $externalUrl to pre-download the resource"
+      log "       instead of using SPIGET_RESOURCES"
+    fi
+    exit 1
   fi
 
-  if containsJars "${tmpfile}"; then
-    log "Extracting contents of resource ${resource} into plugins"
-    unzip -o -q -d /data/plugins "${tmpfile}"
-    rm "${tmpfile}"
-  elif containsPlugin "${tmpfile}"; then
+  if ! fileType=$(get --json-path '.file.type' "${resourceUrl}"); then
+    log "ERROR: failed to retrieve file type of resource $resource"
+    exit 1
+  fi
+  if containsPlugin "${outfile}"; then
     log "Moving resource ${resource} into plugins"
-    mv "${tmpfile}" "/data/plugins/${resource}.jar"
+    mv "$outfile" /data/plugins
+  elif containsJars "${outfile}"; then
+    log "Extracting contents of resource ${resource} into plugins"
+    extract "$outfile" /data/plugins
   else
-    log "ERROR downloaded resource '${resource}' seems to be not a valid plugin"
+    log "ERROR: file for resource ${resource} has an unexpected file type: ${fileType}"
     exit 2
   fi
-
+  rm -rf "$tempDir"
 }
 
 if [[ ${SPIGET_RESOURCES} ]]; then
-  if isTrue ${REMOVE_OLD_MODS:-false}; then
+  if isTrue "${REMOVE_OLD_MODS:-false}"; then
     removeOldMods /data/plugins
     REMOVE_OLD_MODS=false
   fi
@@ -118,4 +134,4 @@ if [[ ${SPIGET_RESOURCES} ]]; then
   done
 fi
 
-exec ${SCRIPTS:-/}start-setupWorld $@
+exec "${SCRIPTS:-/}start-setupWorld" "$@"
